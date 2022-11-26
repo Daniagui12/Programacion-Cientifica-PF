@@ -61,11 +61,11 @@ Boton4 = ttk.Button(master=window, text="Exportar", style="2.TButton", command =
 lbl_titulo = tk.Label(master=frame1, bg="#F4D03F", font=('TIMES', 15, 'bold'), text="Método solución").place(x=5,y=5)
 
 #Checkbox
-c1 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Runge-Kutta 2",variable=0, onvalue=1, offvalue=0, command=0).place(x=20,y=50)
-c2 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Runge-Kutta 4",variable=0, onvalue=1, offvalue=0, command=0).place(x=20,y=80)
-c3 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Euler Adelante",variable=0, onvalue=1, offvalue=0, command=0).place(x=20,y=110)
-c4 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Euler Modificado",variable=0, onvalue=1, offvalue=0, command=0).place(x=20,y=140)
-c5 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Euler Atrás",variable=0, onvalue=1, offvalue=0, command=0).place(x=20,y=170)
+c1 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Runge-Kutta 2",variable=1, onvalue=1, offvalue=0, command=0).place(x=20,y=50)
+c2 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Runge-Kutta 4",variable=2, onvalue=1, offvalue=0, command=0).place(x=20,y=80)
+c3 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Euler Adelante",variable=3, onvalue=1, offvalue=0, command=0).place(x=20,y=110)
+c4 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Euler Modificado",variable=4, onvalue=1, offvalue=0, command=0).place(x=20,y=140)
+c5 = tk.Checkbutton(master=frame1, bg="#F4D03F", font=('TIMES', 11, 'bold italic'),text="Euler Atrás",variable=5, onvalue=1, offvalue=0, command=0).place(x=20,y=170)
 
 #c1.pack()
 #lbl_x = tk.Label(master=frame1,font=('math', 15, 'bold italic'),bg="#F4D03F",text="x =",relief = tk.RIDGE, borderwidth = 3,width = 8).place(x=200, y=100)
