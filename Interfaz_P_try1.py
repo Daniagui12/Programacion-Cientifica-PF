@@ -22,9 +22,6 @@ window.title('Diferentes funciones - Programación Científica')
 etiqueta=tk.Label(window,text="Modelo de Hodgkin y Huxley",font=('math', 15, 'bold italic'))#, borderwidth = 3,width = 8)
 etiqueta.pack(side=tk.TOP)
 
-frame = tk.Frame(window)
-frame.grid(row=0, column=0, sticky="nsew")
-
 frame1 = tk.Frame(master=window)
 frame1.place(x=25, y=400)
 frame1.config(bg="#83D6B7", width=850, height=300, relief=tk.GROOVE, bd=8)
