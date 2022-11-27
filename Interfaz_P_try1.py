@@ -28,7 +28,13 @@ frame1 = tk.Frame(master=window)
 frame1.place(x=25, y=400)
 frame1.config(bg="#83D6B7", width=850, height=300, relief=tk.GROOVE, bd=8)
 
+# Place row in frame1
+row1 = tk.Frame(master=frame1)
+row1.pack(side=tk.TOP)
 
+img = ImageTk.PhotoImage(Image.open("assets/images/Imagen_circuito.png"))
+lab = tk.Label(image=img)
+lab.place(x=470,y=50)
 
 
 def CerrarAplicacion():
