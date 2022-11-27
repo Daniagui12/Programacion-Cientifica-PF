@@ -22,19 +22,24 @@ window.title('Diferentes funciones - Programación Científica')
 etiqueta=tk.Label(window,text="Modelo de Hodgkin y Huxley",font=('math', 15, 'bold italic'))#, borderwidth = 3,width = 8)
 etiqueta.pack(side=tk.TOP)
 
-
+frame = tk.Frame(window)
+frame.grid(row=0, column=0, sticky="nsew")
 
 frame1 = tk.Frame(master=window)
 frame1.place(x=25, y=400)
 frame1.config(bg="#83D6B7", width=850, height=300, relief=tk.GROOVE, bd=8)
 
-# Place row in frame1
-row1 = tk.Frame(master=frame1)
-row1.pack(side=tk.TOP)
-
 img = ImageTk.PhotoImage(Image.open("assets/images/Imagen_circuito.png"))
 lab = tk.Label(image=img)
 lab.place(x=470,y=50)
+
+figure1 = plt.figure(figsize=(4.5, 3.5), dpi=100)
+plt.xlabel('Time (ms)')
+plt.ylabel('Voltage (mV)')
+ax1 = figure1.add_subplot(111)
+bar1 = FigureCanvasTkAgg(figure1, window)
+widget = bar1.get_tk_widget()
+widget.place(x=10, y=50)
 
 
 def CerrarAplicacion():
