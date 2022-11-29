@@ -22,11 +22,9 @@ label = tk.Label(window, background= "#8ea7ba", text="Modelo de Hodgkin-Huxley",
 
 # grafica
 fig = Figure(figsize=(6, 5), dpi=50)
-t = np.arange(0, 3, .01)
 ax = fig.add_subplot()
-line, = ax.plot(t, 2 * np.sin(2 * np.pi * t))
-ax.set_xlabel("time [s]")
-ax.set_ylabel("f(t)")
+ax.set_xlabel("time (ms)")
+ax.set_ylabel("voltage (mV)")
 canvas = FigureCanvasTkAgg(fig, window)
 canvas.get_tk_widget().place(x=50, y=50)
 
@@ -34,6 +32,10 @@ canvas.get_tk_widget().place(x=50, y=50)
 img = ImageTk.PhotoImage(Image.open("assets/images/Imagen_circuito.png"))
 lab = tk.Label(image=img)
 lab.place(x=440,y=50)
+
+img2 = ImageTk.PhotoImage(Image.open("assets/images/Imagen_tabla.png"))
+lab = tk.Label(image=img2)
+lab.place(x=440,y=445)
 
 # Metodos de Solucion
 metodo = tk.Label(window, text="Método de solución:", font=('math', 9, 'bold italic')).place(x=20, y=320)
