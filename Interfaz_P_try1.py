@@ -15,7 +15,7 @@ window = tk.Tk()
 
 # Definir tamaño de ventana:
 window.geometry("800x600")
-window.title("Simulación")
+window.title("Simulación - Modelo Hodkin-Huxley")
 
 
 label = tk.Label(window, background= "#8ea7ba", text="Modelo de Hodgkin-Huxley", font=('math', 15, 'bold italic'),height=1 ,width=800).pack()
