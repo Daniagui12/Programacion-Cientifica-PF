@@ -2,6 +2,8 @@ import tkinter as tk
 import numpy as np
 import matplotlib as mpl
 from tkinter import ttk
+from matplotlib import pyplot as plt
+import funciones_modelo as fm
 
 mpl.use('TkAgg')
 
@@ -88,5 +90,27 @@ tiempoFinEstimulacion11 = tk.Label(window, text="ms",font=('math', 9, 'italic'))
 ValorEstimulacion = tk.Label(window, text="Valor estimulacion:",font=('math', 9, 'italic')).place(x=440, y=380)
 ValorEstimulacion1 = tk.Entry(window, width=8).place(x=630, y=380)
 ValorEstimulacion11 = tk.Label(window, text="ms",font=('math', 9, 'italic')).place(x=680, y=380)
+
+# Solucion 
+
+def start_simulation():
+    # Parametros
+    Ek = float(Ek1.get())
+    ENa = float(ENa1.get())
+    El = float(El1.get())
+    gk = float(gk1.get())
+    gNa = float(gNa1.get())
+    # Variables
+    tiempoSimulacion = float(tiempoSimulacion1.get())
+    tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1.get())
+    tiempoFinEstimulacion = float(tiempoFinEstimulacion1.get())
+    ValorEstimulacion = float(ValorEstimulacion1.get())
+    
+    # Solucion
+    if checkRungeKutta2 == 1:
+        print("Runge Kutta 2")
+    if checkRungeKutta4 == 1:
+        print("Runge Kutta 4")
+
 
 window.mainloop()
