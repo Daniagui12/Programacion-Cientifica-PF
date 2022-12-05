@@ -1,78 +1,203 @@
+import pylab as plt
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.integrate import odeint
-from scipy.integrate import solve_ivp
 
-# Definimos las funciones
+class HodgkinHuxley():
+    
+    def __init__(self, cm, gna, gk, gl, ena, ek, el, tiempoInicio, tiempoFinal, h):
+        """
+        Parametros
+        |  :param cm: membrana de capacitancia, en uF/cm^2
+        |  :param gna: conductancia maxima de sodio (Na), en mS/cm^2
+        |  :param gk: conductancia maxima de potasio (K), en mS/cm^2
+        |  :param gl: conductancia maxima de la fuga, en mS/cm^2
+        |  :param ena: potencial de reversa de sodio (Na = nombre del elemento), en mV
+        |  :param ek: potencial de reversa de potasio (K = nombre del elemento), en mV
+        |  :param el: potencial de reversa de la fuga, en mV
+        |  :param tiempoInicio: tiempo de inicio
+        |  :param tiempoFinal: tiempo final
+        |  :param h: paso de tiempo
+        """
 
-def alfa_m(v):
-    return 0.1 * (v + 40) / (1 - np.exp(-(v + 40) / 10))
+        self.cm = cm
+        
+        self.gna = gna
+        
+        self.gk = gk
+        
+        self.gl = gl
+        
+        self.ena = ena
+        
+        self.ek = ek
+        
+        self.el = el
+        
+        self.t = np.arange(tiempoInicio, tiempoFinal + h, h)
+        
 
-def beta_m(v):
-    return 4 * np.exp(-(v + 65) / 18)
+    def alfa_m(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: alfa_m
+        """
 
-def alfa_n(v):
-    return 0.01 * (v + 55) / (1 - np.exp(-(v + 55) / 10))
+        return 0.1*(V+40.0)/(1.0 - np.exp(-(V+40.0) / 10.0))
 
-def beta_n(v):
-    return 0.125 * np.exp(-(v + 65) / 80)
+    def beta_m(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: beta_m
+        """
 
-def alfa_h(v):
-    return 0.07 * np.exp(-(v + 65) / 20)
+        return 4.0*np.exp(-(V+65.0) / 18.0)
 
-def beta_h(v):
-    return 1 / (1 + np.exp(-(v + 35) / 10))
+    def alfa_h(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: alfa_h
+        """
 
-def HH(ek, el, ena, gna, gk, gl, i):
-    def HH(v, t):
-        m = alfa_m(v) / (alfa_m(v) + beta_m(v))
-        n = alfa_n(v) / (alfa_n(v) + beta_n(v))
-        h = alfa_h(v) / (alfa_h(v) + beta_h(v))
-        dv = (i(t) - gna * m ** 3 * h * (v - ena) - gk * n ** 4 * (v - ek) - gl * (v - el)) / 1
-        return dv
-    return HH
+        return 0.07*np.exp(-(V+65.0) / 20.0)
 
+    def beta_h(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: beta_h
+        """
+        
+        return 1.0/(1.0 + np.exp(-(V+35.0) / 10.0))
 
-def solucionRungeKutta2(t, gk, gna, gl, ek, ena, el):
-    v = np.zeros(len(t))
-    v[0] = 0
-    for i in range(1, len(t)):
-        dv1 = HH(v[i - 1], gk, gna, gl, ek, ena, el, t[i - 1])
-        dv2 = HH(v[i - 1] + dv1 * (t[i] - t[i - 1]) / 2, gk, gna, gl, ek, ena, el, t[i - 1] + (t[i] - t[i - 1]) / 2)
-        v[i] = v[i - 1] + (dv1 + dv2) * (t[i] - t[i - 1]) / 2
-    return v
+    def alfa_n(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: alfa_n
+        """
 
-def solucionRungeKutta4(v0, t, gk, gna, gl, vk, vna, vl, i):
-    v = np.zeros(len(t))
-    v[0] = v0
-    for i in range(1, len(t)):
-        dv1 = HH(v[i - 1], t[i - 1], gk, gna, gl, vk, vna, vl, i)
-        dv2 = HH(v[i - 1] + dv1 * (t[i] - t[i - 1]) / 2, t[i - 1] + (t[i] - t[i - 1]) / 2, gk, gna, gl, vk, vna, vl, i)
-        dv3 = HH(v[i - 1] + dv2 * (t[i] - t[i - 1]) / 2, t[i - 1] + (t[i] - t[i - 1]) / 2, gk, gna, gl, vk, vna, vl, i)
-        dv4 = HH(v[i - 1] + dv3 * (t[i] - t[i - 1]), t[i - 1] + (t[i] - t[i - 1]), gk, gna, gl, vk, vna, vl, i)
-        v[i] = v[i - 1] + (dv1 + 2 * dv2 + 2 * dv3 + dv4) * (t[i] - t[i - 1]) / 6
-    return v
+        return 0.01*(V+55.0)/(1.0 - np.exp(-(V+55.0) / 10.0))
 
-def solucionEulerForward(v0, t, gk, gna, gl, vk, vna, vl, i):
-    v = np.zeros(len(t))
-    v[0] = v0
-    for i in range(1, len(t)):
-        dv = HH(v[i - 1], t[i - 1], gk, gna, gl, vk, vna, vl, i)
-        v[i] = v[i - 1] + dv * (t[i] - t[i - 1])
-    return v
+    def beta_n(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: beta_n
+        """
 
-def solucionEulerBackward(v0, t, gk, gna, gl, vk, vna, vl, i):
-    v = np.zeros(len(t))
-    v[0] = v0
-    for i in range(1, len(t)):
-        dv = HH(v[i - 1], t[i - 1], gk, gna, gl, vk, vna, vl, i)
-        v[i] = v[i - 1] + dv * (t[i] - t[i - 1])
-    return v
+        return 0.125*np.exp(-(V+65) / 80.0)
 
-def solucionScipy(v0, t, gk, gna, gl, vk, vna, vl, i):
-    sol = solve_ivp(HH, [t[0], t[-1]], [v0], t_eval=t, args=(gk, gna, gl, vk, vna, vl, i))
-    return sol.y[0]
+    def I_Na(self, V, m, h):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :param m: variable de estado
+        |  :param h: variable de estado
+        |  :return: corriente de sodio
+        """
 
+        return self.gna * m**3 * h * (V - self.ena)
 
+    def I_K(self, V, n):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :param n: variable de estado
+        |  :return: corriente de potasio
+        """
 
+        return self.gk  * n**4 * (V - self.ek)
+    #  Leak
+    def I_L(self, V):
+        """
+        Parametros
+        |  :param V: potencial de membrana
+        |  :return: corriente de fuga
+        """
 
+        return self.gl * (V - self.el)
+
+    def I_inj(self, t):
+        """
+        Parametros
+        |  :param t: tiempo
+        |  :return: corriente de inyeccion
+        """
+
+        if (t>=10) and (t<=50):
+            return 20
+        elif (t>=100) and (t<=150):
+            return 120
+        elif (t>=300) and (t<=350):
+            return -10
+        else:
+            return 0
+
+    @staticmethod
+    def dALLdt(X, t, self):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: derivadas de las variables de estado
+        """
+        V, m, h, n = X
+
+        dVdt = (self.I_inj(t) - self.I_Na(V, m, h) - self.I_K(V, n) - self.I_L(V)) / self.cm
+        dmdt = self.alfa_m(V)*(1.0-m) - self.beta_m(V)*m
+        dhdt = self.alfa_h(V)*(1.0-h) - self.beta_h(V)*h
+        dndt = self.alfa_n(V)*(1.0-n) - self.beta_n(V)*n
+        return dVdt, dmdt, dhdt, dndt
+
+    def Main(self):
+        """
+        Main del programa principal
+        """
+
+        X = odeint(self.dALLdt, [-65, 0.05, 0.5, 0.4], self.t, args=(self,))
+        V = X[:,0]
+        m = X[:,1]
+        h = X[:,2]
+        n = X[:,3]
+        ina = self.I_Na(V, m, h)
+        ik = self.I_K(V, n)
+        il = self.I_L(V)
+
+        plt.figure()
+
+        ax1 = plt.subplot(4,1,1)
+        plt.title('Hodgkin-Huxley Neuron')
+        plt.plot(self.t, V, 'k')
+        plt.ylabel('V (mV)')
+
+        plt.subplot(4,1,2, sharex = ax1)
+        plt.plot(self.t, ina, 'c', label='$I_{Na}$')
+        plt.plot(self.t, ik, 'y', label='$I_{K}$')
+        plt.plot(self.t, il, 'm', label='$I_{L}$')
+        plt.ylabel('Current')
+        plt.legend()
+
+        plt.subplot(4,1,3, sharex = ax1)
+        plt.plot(self.t, m, 'r', label='m')
+        plt.plot(self.t, h, 'g', label='h')
+        plt.plot(self.t, n, 'b', label='n')
+        plt.ylabel('Gating Value')
+        plt.legend()
+
+        plt.subplot(4,1,4, sharex = ax1)
+        i_inj_values = [self.I_inj(t) for t in self.t]
+        plt.plot(self.t, i_inj_values, 'k')
+        plt.xlabel('t (ms)')
+        plt.ylabel('$I_{inj}$ ($\\mu{A}/cm^2$)')
+        plt.ylim(-1, 40)
+
+        plt.tight_layout()
+        plt.show()
+
+if __name__ == '__main__':
+    runner = HodgkinHuxley(1, 120, 36, 0.3, 50, -77, -54.387, 0, 500, 0.01)
+    runner.Main()

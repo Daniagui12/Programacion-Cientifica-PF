@@ -122,7 +122,8 @@ def start_simulation():
         tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
         tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
         valorEstimulacion = float(ValorEstimulacion1Var.get())
-        tiempo = np.arange(tiempoInicioEstimulacion, tiempoFinEstimulacion, valorEstimulacion)
+        h = 0.01
+        t = np.arange(tiempoInicioEstimulacion, tiempoFinEstimulacion + h, h)
 
         # Parametros
         Ek = float(Ek1Var.get())
@@ -131,9 +132,6 @@ def start_simulation():
         gk = float(gk1Var.get())
         gNa = float(gNa1Var.get())
         print("Runge Kutta 2")
-        
-        solucion = fm.solucionRungeKutta2(tiempo, gk, gNa, 120, gk, gNa)
-        print(solucion)
 
     if checkRungeKutta4 == 1:
         print("Runge Kutta 4")
