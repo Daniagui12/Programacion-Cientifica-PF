@@ -4,7 +4,7 @@ from scipy.integrate import odeint
 
 class HodgkinHuxley():
     
-    def __init__(self, cm, gna, gk, gl, ena, ek, el, tiempoInicio, tiempoFinal, h):
+    def __init__(self, cm, gna, gk, gl, ena, ek, el, tiempoInicio, tiempoFinal, h, metodo):
         """
         Parametros
         |  :param cm: membrana de capacitancia, en uF/cm^2
@@ -34,6 +34,8 @@ class HodgkinHuxley():
         self.el = el
         
         self.t = np.arange(tiempoInicio, tiempoFinal + h, h)
+
+        self.metodo = metodo
         
 
     def alfa_m(self, V):
@@ -153,19 +155,77 @@ class HodgkinHuxley():
         dndt = self.alfa_n(V)*(1.0-n) - self.beta_n(V)*n
         return dVdt, dmdt, dhdt, dndt
 
+    def rungeKutta2(self, X, t):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: vector de variables de estado
+        """
+
+        k1 = self.dALLdt(X, t, self)
+        k2 = self.dALLdt(X + 0.5 * k1, t + 0.5 * self.h, self)
+        return X + k2 * self.h
+
+    def rungeKutta4(self, X, t):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: vector de variables de estado
+        """
+
+        k1 = self.dALLdt(X, t, self)
+        k2 = self.dALLdt(X + 0.5 * k1, t + 0.5 * self.h, self)
+        k3 = self.dALLdt(X + 0.5 * k2, t + 0.5 * self.h, self)
+        k4 = self.dALLdt(X + k3, t + self.h, self)
+        return X + (k1 + 2.0 * k2 + 2.0 * k3 + k4) * self.h / 6.0
+
     def Main(self):
         """
         Main del programa principal
         """
-
-        X = odeint(self.dALLdt, [-65, 0.05, 0.5, 0.4], self.t, args=(self,))
-        V = X[:,0]
-        m = X[:,1]
-        h = X[:,2]
-        n = X[:,3]
-        ina = self.I_Na(V, m, h)
-        ik = self.I_K(V, n)
-        il = self.I_L(V)
+        if self.metodo == "odeint":
+            X = odeint(self.dALLdt, [-65, 0.05, 0.5, 0.4], self.t, args=(self,))
+            V = X[:,0]
+            m = X[:,1]
+            h = X[:,2]
+            n = X[:,3]
+            ina = self.I_Na(V, m, h)
+            ik = self.I_K(V, n)
+            il = self.I_L(V)
+        
+        elif self.metodo == "rungeKutta2":
+            X = np.zeros((len(self.t), 4))
+            X[0] = [-65, 0.05, 0.5, 0.4]
+            for i in range(1, len(self.t)):
+                X[i] = self.rungeKutta2(X[i-1], self.t[i-1])
+            V = X[:,0]
+            m = X[:,1]
+            h = X[:,2]
+            n = X[:,3]
+            ina = self.I_Na(V, m, h)
+            ik = self.I_K(V, n)
+            il = self.I_L(V)
+        
+        elif self.metodo == "rungeKutta4":
+            X = np.zeros((len(self.t), 4))
+            X[0] = [-65, 0.05, 0.5, 0.4]
+            for i in range(1, len(self.t)):
+                X[i] = self.rungeKutta4(X[i-1], self.t[i-1])
+            V = X[:,0]
+            m = X[:,1]
+            h = X[:,2]
+            n = X[:,3]
+            ina = self.I_Na(V, m, h)
+            ik = self.I_K(V, n)
+            il = self.I_L(V)
+        
+        else:
+            print("Metodo no valido")
+            return
 
         plt.figure()
 
@@ -199,5 +259,5 @@ class HodgkinHuxley():
         plt.show()
 
 if __name__ == '__main__':
-    runner = HodgkinHuxley(1, 120, 36, 0.3, 50, -77, -54.387, 0, 500, 0.01)
+    runner = HodgkinHuxley(1, 120, 36, 0.3, 50, -77, -54.387, 0, 500, 0.01, "rungeKutta2")
     runner.Main()
