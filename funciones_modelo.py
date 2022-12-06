@@ -230,6 +230,16 @@ class HodgkinHuxley():
         return X + (k1 + 2.0 * k2 + 2.0 * k3 + k4) * self.h / 6.0
 
     def FEulerBackRoot(self, arraySolutions, v, n, m, h, t):
+        """
+        Parametros
+        |  :param arraySolutions: vector de variables de estado
+        |  :param v: potencial de membrana
+        |  :param n: variable de estado n
+        |  :param m: variable de estado m
+        |  :param h: variable de estado h
+        |  :param t: tiempo
+        |  :return: vector de variables de estado
+        """
         return [v + self.h * self.dVdtFunction(arraySolutions[0], arraySolutions[1], arraySolutions[2], arraySolutions[3], t) - arraySolutions[0],
                 n + self.h * (self.alfa_n(arraySolutions[0])*(1.0-arraySolutions[1]) - self.beta_n(arraySolutions[0])*arraySolutions[1]) - arraySolutions[1],
                 m + self.h * (self.alfa_m(arraySolutions[0])*(1.0-arraySolutions[2]) - self.beta_m(arraySolutions[0])*arraySolutions[2]) - arraySolutions[2],
@@ -248,6 +258,7 @@ class HodgkinHuxley():
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
+            return V, ina, ik, il
         
         elif self.metodo == "rungeKutta2":
             v_RK2 = np.zeros(len(self.t))
@@ -279,6 +290,7 @@ class HodgkinHuxley():
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
+            return V, ina, ik, il
         
         elif self.metodo == "rungeKutta4":
             v_RK4 = np.zeros(len(self.t))
@@ -319,6 +331,7 @@ class HodgkinHuxley():
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
+            return V, ina, ik, il
 
 
         elif self.metodo == "eulerFor":
@@ -342,6 +355,7 @@ class HodgkinHuxley():
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
+            return V, ina, ik, il
         
         elif self.metodo == "eulerBack":
             v_eBack = np.zeros(len(self.t))
@@ -365,6 +379,7 @@ class HodgkinHuxley():
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
+            return V, ina, ik, il
 
         elif self.metodo == "eulerMod":
             v_eMod = np.zeros(len(self.t))
@@ -399,46 +414,42 @@ class HodgkinHuxley():
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
-
-
-
-
-
+            return V, ina, ik, il
 
         else:
             print("Metodo no valido")
             return
 
-        plt.figure()
+        # plt.figure()
 
-        ax1 = plt.subplot(4,1,1)
-        plt.title('Hodgkin-Huxley Neuron')
-        plt.plot(self.t, V, 'k')
-        plt.ylabel('V (mV)')
+        # ax1 = plt.subplot(4,1,1)
+        # plt.title('Hodgkin-Huxley Neuron')
+        # plt.plot(self.t, V, 'k')
+        # plt.ylabel('V (mV)')
 
-        plt.subplot(4,1,2, sharex = ax1)
-        plt.plot(self.t, ina, 'c', label='$I_{Na}$')
-        plt.plot(self.t, ik, 'y', label='$I_{K}$')
-        plt.plot(self.t, il, 'm', label='$I_{L}$')
-        plt.ylabel('Current')
-        plt.legend()
+        # plt.subplot(4,1,2, sharex = ax1)
+        # plt.plot(self.t, ina, 'c', label='$I_{Na}$')
+        # plt.plot(self.t, ik, 'y', label='$I_{K}$')
+        # plt.plot(self.t, il, 'm', label='$I_{L}$')
+        # plt.ylabel('Current')
+        # plt.legend()
 
-        plt.subplot(4,1,3, sharex = ax1)
-        plt.plot(self.t, m, 'r', label='m')
-        plt.plot(self.t, h, 'g', label='h')
-        plt.plot(self.t, n, 'b', label='n')
-        plt.ylabel('Gating Value')
-        plt.legend()
+        # plt.subplot(4,1,3, sharex = ax1)
+        # plt.plot(self.t, m, 'r', label='m')
+        # plt.plot(self.t, h, 'g', label='h')
+        # plt.plot(self.t, n, 'b', label='n')
+        # plt.ylabel('Gating Value')
+        # plt.legend()
 
-        plt.subplot(4,1,4, sharex = ax1)
-        i_inj_values = [self.I_inj(t) for t in self.t]
-        plt.plot(self.t, i_inj_values, 'k')
-        plt.xlabel('t (ms)')
-        plt.ylabel('$I_{inj}$ ($\\mu{A}/cm^2$)')
-        plt.ylim(-1, 40)
+        # plt.subplot(4,1,4, sharex = ax1)
+        # i_inj_values = [self.I_inj(t) for t in self.t]
+        # plt.plot(self.t, i_inj_values, 'k')
+        # plt.xlabel('t (ms)')
+        # plt.ylabel('$I_{inj}$ ($\\mu{A}/cm^2$)')
+        # plt.ylim(-1, 40)
 
-        plt.tight_layout()
-        plt.show()
+        # plt.tight_layout()
+        # plt.show()
 
 if __name__ == '__main__':
     runner = HodgkinHuxley(1, 120, 36, 0.3, 50, -77, -54.387, 0, 500, 0.01, "eulerMod")

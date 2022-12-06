@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib as mpl
 from tkinter import ttk
 from matplotlib import pyplot as plt
-import funciones_modelo as fm
+from funciones_modelo import *
+import struct as st
 
 mpl.use('TkAgg')
 
@@ -111,9 +112,12 @@ ValorEstimulacion11 = tk.Label(window, text="ms",font=('math', 9, 'italic')).pla
 
 # ------------------- Variables botones -------------------
 def start_simulation():
+    """
+    Funcion que inicia la simulacion
+    """
 
-    print("Iniciando simulacion")
-    print(checkRungeKutta2V.get())
+    print("Iniciando exportacion de datos...")
+
     # Solucion
     if checkRungeKutta2V.get() == 1:
 
@@ -123,7 +127,8 @@ def start_simulation():
         tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
         valorEstimulacion = float(ValorEstimulacion1Var.get())
         h = 0.01
-        t = np.arange(tiempoInicioEstimulacion, tiempoFinEstimulacion + h, h)
+        cm = 1.0
+        gl = 0.3
 
         # Parametros
         Ek = float(Ek1Var.get())
@@ -133,13 +138,523 @@ def start_simulation():
         gNa = float(gNa1Var.get())
         print("Runge Kutta 2")
 
-    if checkRungeKutta4 == 1:
+        # Solucion
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "rungeKutta2" )
+        solution_tuple = hh.Main()
+
+        if check6V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[0], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check7V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[1], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check8V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[2], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+    if checkRungeKutta4V.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
         print("Runge Kutta 4")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "rungeKutta4")
+        solution_tuple = hh.Main()
+
+        if check6V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[0], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check7V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[1], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check8V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[2], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+    if checkEulerAdelanteV.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Euler hacia adelante")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "eulerFor")
+        solution_tuple = hh.Main()
+
+        if check6V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[0], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check7V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[1], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check8V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[2], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+    if checkEulerAtrasV.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Euler hacia atras")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "eulerBack")
+        solution_tuple = hh.Main()
+
+        if check6V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[0], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check7V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[1], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check8V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[2], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+    if checkEulerModificadoV.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Euler modificado")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "eulerMod")
+        solution_tuple = hh.Main()
+
+
+        if check6V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[0], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check7V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[1], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+        elif check8V.get() == 1:
+            fig = Figure(figsize=(6, 5), dpi=50)
+            ax = fig.add_subplot()
+            ax.plot(hh.t, solution_tuple[2], label="m")
+            ax.set_xlabel("time (ms)")
+            ax.set_ylabel("voltage (mV)")
+            
+            canvas = FigureCanvasTkAgg(fig, window)
+            canvas.get_tk_widget().place(x=50, y=50)
+
+
+
+def export_to_bin_file_double(V, t):
+    """
+    Parametros
+    V: vector de voltajes
+    t: vector de tiempos
+    """
+    # Exportar a binario
+    if check6V.get() == 1:
+        print("Exportar a binario")
+        with open('pruebaV.bin', 'wb') as f:
+            for i in range(len(V)):
+                f.write(st.pack('d', V[i]))
+        
+        with open('pruebaT.bin', 'wb') as f:
+            for i in range(len(t)):
+                f.write(st.pack('d', t[i]))
+    
+    elif check7V.get() == 1:
+        print("Exportar a binario")
+        with open('pruebaGk.bin', 'wb') as f:
+            for i in range(len(V)):
+                f.write(st.pack('d', V[i]))
+        
+        with open('pruebaT.bin', 'wb') as f:
+            for i in range(len(t)):
+                f.write(st.pack('d', t[i]))
+
+    elif check8V.get() == 1:
+        print("Exportar a binario")
+        with open('pruebaGna.bin', 'wb') as f:
+            for i in range(len(V)):
+                f.write(st.pack('d', V[i]))
+        
+        with open('pruebaT.bin', 'wb') as f:
+            for i in range(len(t)):
+                f.write(st.pack('d', t[i]))
+
+
+def import_from_bin_file_double():
+    """
+    Funcion que importa los datos de un archivo binario
+    """
+    if check6V.get() == 1:
+        print("Importar de binario")
+        with open('pruebaT.bin', 'rb') as f:
+            t = []
+            while True:
+                data = f.read(8)
+                if not data:
+                    break
+                t.append(st.unpack('d', data)[0])
+        
+        with open('pruebaV.bin', 'rb') as f:
+            V = []
+            while True:
+                data = f.read(8)
+                if not data:
+                    break
+                V.append(st.unpack('d', data)[0])
+
+        fig = Figure(figsize=(6, 5), dpi=50)
+        ax = fig.add_subplot()
+        ax.plot(t, V, label="m")
+        ax.set_xlabel("time (ms)")
+        ax.set_ylabel("voltage (mV)")
+        
+        canvas = FigureCanvasTkAgg(fig, window)
+        canvas.get_tk_widget().place(x=50, y=50)
+
+    elif check7V.get() == 1:
+        print("Importar de binario")
+        with open('pruebaT.bin', 'rb') as f:
+            t = []
+            while True:
+                data = f.read(8)
+                if not data:
+                    break
+                t.append(st.unpack('d', data)[0])
+        
+        with open('pruebaGk.bin', 'rb') as f:
+            V = []
+            while True:
+                data = f.read(8)
+                if not data:
+                    break
+                V.append(st.unpack('d', data)[0])
+
+        fig = Figure(figsize=(6, 5), dpi=50)
+        ax = fig.add_subplot()
+        ax.plot(t, V, label="m")
+        ax.set_xlabel("time (ms)")
+        ax.set_ylabel("voltage (mV)")
+        
+        canvas = FigureCanvasTkAgg(fig, window)
+        canvas.get_tk_widget().place(x=50, y=50)
+
+    elif check8V.get() == 1:
+        print("Importar de binario")
+        with open('pruebaT.bin', 'rb') as f:
+            t = []
+            while True:
+                data = f.read(8)
+                if not data:
+                    break
+                t.append(st.unpack('d', data)[0])
+        
+        with open('pruebaGna.bin', 'rb') as f:
+            V = []
+            while True:
+                data = f.read(8)
+                if not data:
+                    break
+                V.append(st.unpack('d', data)[0])
+
+        fig = Figure(figsize=(6, 5), dpi=50)
+        ax = fig.add_subplot()
+        ax.plot(t, V, label="m")
+        ax.set_xlabel("time (ms)")
+        ax.set_ylabel("voltage (mV)")
+        
+        canvas = FigureCanvasTkAgg(fig, window)
+        canvas.get_tk_widget().place(x=50, y=50)
+    
+def export():
+    """
+    Funcion que exporta los datos a un archivo de texto
+    """
+    print("Iniciando exportacion de datos...")
+    
+    # Solucion
+    if checkRungeKutta2V.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Runge Kutta 2")
+
+        # Solucion
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "rungeKutta2" )
+        solution_tuple = hh.Main()
+
+        
+        # Exportar a binario
+        if check6V.get() == 1:
+            export_to_bin_file_double(solution_tuple[0], hh.t)
+        
+        elif check7V.get() == 1:
+            export_to_bin_file_double(solution_tuple[1], hh.t)
+
+        elif check8V.get() == 1:
+            export_to_bin_file_double(solution_tuple[2], hh.t)
+
+    if checkRungeKutta4V.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Runge Kutta 4")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "rungeKutta4")
+        solution_tuple = hh.Main()
+
+        # Exportar a binario
+        export_to_bin_file_double(solution_tuple[0], hh.t)
+
+
+    if checkEulerAdelanteV.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Euler hacia adelante")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "eulerFor")
+        solution_tuple = hh.Main()
+        
+        # Exportar a binario
+        export_to_bin_file_double(solution_tuple[0], hh.t)
+
+
+    if checkEulerAtrasV.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Euler hacia atras")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "eulerBack")
+        solution_tuple = hh.Main()
+
+        # Exportar a binario
+        export_to_bin_file_double(solution_tuple[0], hh.t)
+
+
+    if checkEulerModificadoV.get() == 1:
+
+        # Variables
+        tiempoSimulacion = float(tiempoSimulacion1Var.get())
+        tiempoInicioEstimulacion = float(tiempoInicioEstimulacion1Var.get())
+        tiempoFinEstimulacion = float(tiempoFinEstimulacion1Var.get())
+        valorEstimulacion = float(ValorEstimulacion1Var.get())
+        h = 0.01
+        cm = 1.0
+        gl = 0.3
+
+        # Parametros
+        Ek = float(Ek1Var.get())
+        ENa = float(ENa1Var.get())
+        El = float(El1Var.get())
+        gk = float(gk1Var.get())
+        gNa = float(gNa1Var.get())
+        print("Euler modificado")
+
+        hh = HodgkinHuxley(cm, gNa, gk, gl, ENa, Ek, El, tiempoInicioEstimulacion, tiempoFinEstimulacion, h, "eulerMod")
+        solution_tuple = hh.Main()
+
+        # Exportar a binario
+        export_to_bin_file_double(solution_tuple[0], hh.t)
+    
 
 
 simular = tk.Button(window,background= "#8ea7ba", text="Simular",font=('math', 9, 'bold italic'), width=13, command=lambda : start_simulation()).place(x=450, y=550)
-importar = tk.Button(window,background= "#8ea7ba", text="Importar",font=('math', 9, 'bold italic'), width=13).place(x=560, y=550)
-exportar = tk.Button(window,background= "#8ea7ba", text="Exportar",font=('math', 9, 'bold italic'), width=13).place(x=670, y=550)
+importar = tk.Button(window,background= "#8ea7ba", text="Importar",font=('math', 9, 'bold italic'), width=13, command=lambda : import_from_bin_file_double()).place(x=560, y=550)
+exportar = tk.Button(window,background= "#8ea7ba", text="Exportar",font=('math', 9, 'bold italic'), width=13, command=lambda : export()).place(x=670, y=550)
 cargar = tk.Button(window,background= "#8ea7ba", text="Cargar",font=('math', 9, 'bold italic'), width=13).place(x=670, y=410)
 
 
