@@ -1,6 +1,7 @@
 import pylab as plt
 import numpy as np
 from scipy.integrate import odeint
+import scipy.optimize as opt
 
 class HodgkinHuxley():
     
@@ -32,6 +33,8 @@ class HodgkinHuxley():
         self.ek = ek
         
         self.el = el
+
+        self.h = h
         
         self.t = np.arange(tiempoInicio, tiempoFinal + h, h)
 
@@ -112,6 +115,7 @@ class HodgkinHuxley():
         """
 
         return self.gk  * n**4 * (V - self.ek)
+
     #  Leak
     def I_L(self, V):
         """
@@ -155,18 +159,60 @@ class HodgkinHuxley():
         dndt = self.alfa_n(V)*(1.0-n) - self.beta_n(V)*n
         return dVdt, dmdt, dhdt, dndt
 
-    def rungeKutta2(self, X, t):
+
+    def dVdtFunction(self, V, n, m, h, t):
         """
         Parametros
         |  :param X: vector de variables de estado
         |  :param t: tiempo
         |  :param self:
-        |  :return: vector de variables de estado
+        |  :return: derivada del potencial de membrana
         """
-
-        k1 = self.dALLdt(X, t, self)
-        k2 = self.dALLdt(X + 0.5 * k1, t + 0.5 * self.h, self)
-        return X + k2 * self.h
+        return (self.I_inj(t) - self.I_Na(V, m, h) - self.I_K(V, n) - self.I_L(V)) / self.cm
+    
+    # Derivada respecto a V
+    def f_v(self, V, n, m, h, t):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: derivada de la funcion respecto a V
+        """
+        return (-self.I_Na(V, m, h) - self.I_K(V, n) - self.I_L(V)) / self.cm
+    
+    # Derivada respecto a n
+    def f_n(self, V, n):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: derivada de la funcion respecto a n
+        """
+        return self.gk * (4 * n**3) * (V - self.ek)
+    
+    # Derivada respecto a m
+    def f_m(self, V, m, h):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: derivada de la funcion respecto a m
+        """
+        return self.gna * (3 * m**2) * h * (V - self.ena)
+    
+    # Derivada respecto a h
+    def f_h(self, V, m):
+        """
+        Parametros
+        |  :param X: vector de variables de estado
+        |  :param t: tiempo
+        |  :param self:
+        |  :return: derivada de la funcion respecto a h
+        """
+        return self.gna * m**3 * (V - self.ena)
 
     def rungeKutta4(self, X, t):
         """
@@ -183,6 +229,12 @@ class HodgkinHuxley():
         k4 = self.dALLdt(X + k3, t + self.h, self)
         return X + (k1 + 2.0 * k2 + 2.0 * k3 + k4) * self.h / 6.0
 
+    def FEulerBackRoot(self, arraySolutions, v, n, m, h, t):
+        return [v + self.h * self.dVdtFunction(arraySolutions[0], arraySolutions[1], arraySolutions[2], arraySolutions[3], t) - arraySolutions[0],
+                n + self.h * (self.alfa_n(arraySolutions[0])*(1.0-arraySolutions[1]) - self.beta_n(arraySolutions[0])*arraySolutions[1]) - arraySolutions[1],
+                m + self.h * (self.alfa_m(arraySolutions[0])*(1.0-arraySolutions[2]) - self.beta_m(arraySolutions[0])*arraySolutions[2]) - arraySolutions[2],
+                h + self.h * (self.alfa_h(arraySolutions[0])*(1.0-arraySolutions[3]) - self.beta_h(arraySolutions[0])*arraySolutions[3]) - arraySolutions[3]]
+
     def Main(self):
         """
         Main del programa principal
@@ -198,31 +250,161 @@ class HodgkinHuxley():
             il = self.I_L(V)
         
         elif self.metodo == "rungeKutta2":
-            X = np.zeros((len(self.t), 4))
-            X[0] = [-65, 0.05, 0.5, 0.4]
+            v_RK2 = np.zeros(len(self.t))
+            n_RK2 = np.zeros(len(self.t))
+            m_RK2 = np.zeros(len(self.t))
+            h_RK2 = np.zeros(len(self.t))
+            v_RK2[0] = -65
+            n_RK2[0] = 0.05
+            m_RK2[0] = 0.5
+            h_RK2[0] = 0.4
             for i in range(1, len(self.t)):
-                X[i] = self.rungeKutta2(X[i-1], self.t[i-1])
-            V = X[:,0]
-            m = X[:,1]
-            h = X[:,2]
-            n = X[:,3]
+                vk11 = self.dVdtFunction(v_RK2[i - 1], n_RK2[i - 1], m_RK2[i - 1], h_RK2[i - 1], self.t[i - 1])
+                nk11 = self.alfa_n(v_RK2[i - 1]) * (1 - n_RK2[i - 1]) - self.beta_n(v_RK2[i - 1]) * n_RK2[i - 1]
+                mk11 = self.alfa_m(v_RK2[i - 1]) * (1 - m_RK2[i - 1]) - self.beta_m(v_RK2[i - 1]) * m_RK2[i - 1]
+                hk11 = self.alfa_h(v_RK2[i - 1]) * (1 - h_RK2[i - 1]) - self.beta_h(v_RK2[i - 1]) * h_RK2[i - 1]
+                vk12 = self.dVdtFunction(v_RK2[i - 1] + 0.5 * self.h * vk11, n_RK2[i - 1] + 0.5 * self.h * nk11, m_RK2[i - 1] + 0.5 * self.h * mk11, h_RK2[i - 1] + 0.5 * self.h * hk11, self.t[i - 1] + 0.5 * self.h)
+                nk12 = self.alfa_n(v_RK2[i - 1] + 0.5 * self.h * vk11) * (1 - (n_RK2[i - 1] + 0.5 * self.h * nk11)) - self.beta_n(v_RK2[i - 1] + 0.5 * self.h * vk11) * (n_RK2[i - 1] + 0.5 * self.h * nk11)
+                mk12 = self.alfa_m(v_RK2[i - 1] + 0.5 * self.h * vk11) * (1 - (m_RK2[i - 1] + 0.5 * self.h * mk11)) - self.beta_m(v_RK2[i - 1] + 0.5 * self.h * vk11) * (m_RK2[i - 1] + 0.5 * self.h * mk11)
+                hk12 = self.alfa_h(v_RK2[i - 1] + 0.5 * self.h * vk11) * (1 - (h_RK2[i - 1] + 0.5 * self.h * hk11)) - self.beta_h(v_RK2[i - 1] + 0.5 * self.h * vk11) * (h_RK2[i - 1] + 0.5 * self.h * hk11)
+                v_RK2[i] = v_RK2[i - 1] + self.h * vk12
+                n_RK2[i] = n_RK2[i - 1] + self.h * nk12
+                m_RK2[i] = m_RK2[i - 1] + self.h * mk12
+                h_RK2[i] = h_RK2[i - 1] + self.h * hk12
+            V = v_RK2
+            m = m_RK2
+            h = h_RK2
+            n = n_RK2
+
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
         
         elif self.metodo == "rungeKutta4":
-            X = np.zeros((len(self.t), 4))
-            X[0] = [-65, 0.05, 0.5, 0.4]
+            v_RK4 = np.zeros(len(self.t))
+            n_RK4 = np.zeros(len(self.t))
+            m_RK4 = np.zeros(len(self.t))
+            h_RK4 = np.zeros(len(self.t))
+            v_RK4[0] = -65
+            n_RK4[0] = 0.05
+            m_RK4[0] = 0.5
+            h_RK4[0] = 0.4
             for i in range(1, len(self.t)):
-                X[i] = self.rungeKutta4(X[i-1], self.t[i-1])
-            V = X[:,0]
-            m = X[:,1]
-            h = X[:,2]
-            n = X[:,3]
+                vk11 = self.dVdtFunction(v_RK4[i - 1], n_RK4[i - 1], m_RK4[i - 1], h_RK4[i - 1], self.t[i - 1])
+                nk11 = self.alfa_n(v_RK4[i - 1]) * (1 - n_RK4[i - 1]) - self.beta_n(v_RK4[i - 1]) * n_RK4[i - 1]
+                mk11 = self.alfa_m(v_RK4[i - 1]) * (1 - m_RK4[i - 1]) - self.beta_m(v_RK4[i - 1]) * m_RK4[i - 1]
+                hk11 = self.alfa_h(v_RK4[i - 1]) * (1 - h_RK4[i - 1]) - self.beta_h(v_RK4[i - 1]) * h_RK4[i - 1]
+                vk12 = self.dVdtFunction(v_RK4[i - 1] + 0.5 * self.h * vk11, n_RK4[i - 1] + 0.5 * self.h * nk11, m_RK4[i - 1] + 0.5 * self.h * mk11, h_RK4[i - 1] + 0.5 * self.h * hk11, self.t[i - 1] + 0.5 * self.h)
+                nk12 = self.alfa_n(v_RK4[i - 1] + 0.5 * self.h * vk11) * (1 - (n_RK4[i - 1] + 0.5 * self.h * nk11)) - self.beta_n(v_RK4[i - 1] + 0.5 * self.h * vk11) * (n_RK4[i - 1] + 0.5 * self.h * nk11)
+                mk12 = self.alfa_m(v_RK4[i - 1] + 0.5 * self.h * vk11) * (1 - (m_RK4[i - 1] + 0.5 * self.h * mk11)) - self.beta_m(v_RK4[i - 1] + 0.5 * self.h * vk11) * (m_RK4[i - 1] + 0.5 * self.h * mk11)
+                hk12 = self.alfa_h(v_RK4[i - 1] + 0.5 * self.h * vk11) * (1 - (h_RK4[i - 1] + 0.5 * self.h * hk11)) - self.beta_h(v_RK4[i - 1] + 0.5 * self.h * vk11) * (h_RK4[i - 1] + 0.5 * self.h * hk11)
+                vk13 = self.dVdtFunction(v_RK4[i - 1] + 0.5 * self.h * vk12, n_RK4[i - 1] + 0.5 * self.h * nk12, m_RK4[i - 1] + 0.5 * self.h * mk12, h_RK4[i - 1] + 0.5 * self.h * hk12, self.t[i - 1] + 0.5 * self.h)
+                nk13 = self.alfa_n(v_RK4[i - 1] + 0.5 * self.h * vk12) * (1 - (n_RK4[i - 1] + 0.5 * self.h * nk12)) - self.beta_n(v_RK4[i - 1] + 0.5 * self.h * vk12) * (n_RK4[i - 1] + 0.5 * self.h * nk12)
+                mk13 = self.alfa_m(v_RK4[i - 1] + 0.5 * self.h * vk12) * (1 - (m_RK4[i - 1] + 0.5 * self.h * mk12)) - self.beta_m(v_RK4[i - 1] + 0.5 * self.h * vk12) * (m_RK4[i - 1] + 0.5 * self.h * mk12)
+                hk13 = self.alfa_h(v_RK4[i - 1] + 0.5 * self.h * vk12) * (1 - (h_RK4[i - 1] + 0.5 * self.h * hk12)) - self.beta_h(v_RK4[i - 1] + 0.5 * self.h * vk12) * (h_RK4[i - 1] + 0.5 * self.h * hk12)
+                vk14 = self.dVdtFunction(v_RK4[i - 1] + self.h * vk13, n_RK4[i - 1] + self.h * nk13, m_RK4[i - 1] + self.h * mk13, h_RK4[i - 1] + self.h * hk13, self.t[i - 1] + self.h)
+                nk14 = self.alfa_n(v_RK4[i - 1] + self.h * vk13) * (1 - (n_RK4[i - 1] + self.h * nk13)) - self.beta_n(v_RK4[i - 1] + self.h * vk13) * (n_RK4[i - 1] + self.h * nk13)
+                mk14 = self.alfa_m(v_RK4[i - 1] + self.h * vk13) * (1 - (m_RK4[i - 1] + self.h * mk13)) - self.beta_m(v_RK4[i - 1] + self.h * vk13) * (m_RK4[i - 1] + self.h * mk13)
+                hk14 = self.alfa_h(v_RK4[i - 1] + self.h * vk13) * (1 - (h_RK4[i - 1] + self.h * hk13)) - self.beta_h(v_RK4[i - 1] + self.h * vk13) * (h_RK4[i - 1] + self.h * hk13)
+                v_RK4[i] = v_RK4[i - 1] + (self.h / 6) * (vk11 + 2 * vk12 + 2 * vk13 + vk14)
+                n_RK4[i] = n_RK4[i - 1] + (self.h / 6) * (nk11 + 2 * nk12 + 2 * nk13 + nk14)
+                m_RK4[i] = m_RK4[i - 1] + (self.h / 6) * (mk11 + 2 * mk12 + 2 * mk13 + mk14)
+                h_RK4[i] = h_RK4[i - 1] + (self.h / 6) * (hk11 + 2 * hk12 + 2 * hk13 + hk14)
+            
+            V = v_RK4
+            m = m_RK4
+            h = h_RK4
+            n = n_RK4
+
+            ina = self.I_Na(V, m, h)
+            ik = self.I_K(V, n)
+            il = self.I_L(V)
+
+
+        elif self.metodo == "eulerFor":
+            v_e = np.zeros(len(self.t))
+            n_e = np.zeros(len(self.t))
+            m_e = np.zeros(len(self.t))
+            h_e = np.zeros(len(self.t))
+            v_e[0] = -65
+            n_e[0] = 0.05
+            m_e[0] = 0.5
+            h_e[0] = 0.4
+            for i in range(1, len(self.t)):
+                v_e[i] = v_e[i - 1] + self.h * self.dVdtFunction(v_e[i - 1], n_e[i - 1], m_e[i - 1], h_e[i - 1], self.t[i])
+                n_e[i] = n_e[i - 1] + self.h * (self.alfa_n(v_e[i - 1]) * (1.0-n_e[i - 1]) - self.beta_n(v_e[i - 1]) * n_e[i - 1])
+                m_e[i] = m_e[i - 1] + self.h * (self.alfa_m(v_e[i - 1]) * (1.0-m_e[i - 1]) - self.beta_m(v_e[i - 1]) * m_e[i - 1])
+                h_e[i] = h_e[i - 1] + self.h * (self.alfa_h(v_e[i - 1]) * (1.0-h_e[i - 1]) - self.beta_h(v_e[i - 1]) * h_e[i - 1])
+            V = v_e
+            m = m_e
+            h = h_e
+            n = n_e
             ina = self.I_Na(V, m, h)
             ik = self.I_K(V, n)
             il = self.I_L(V)
         
+        elif self.metodo == "eulerBack":
+            v_eBack = np.zeros(len(self.t))
+            n_eBack = np.zeros(len(self.t))
+            m_eBack = np.zeros(len(self.t))
+            h_eBack = np.zeros(len(self.t))
+            v_eBack[0] = -65
+            n_eBack[0] = 0.05
+            m_eBack[0] = 0.5
+            h_eBack[0] = 0.4
+            for i in range(1, len(self.t)):
+                v_eBack[i] = self.f_v(v_eBack[i - 1], n_eBack[i - 1], m_eBack[i - 1], h_eBack[i - 1], self.t[i])
+                n_eBack[i] = self.f_n(n_eBack[i - 1], v_eBack[i - 1])
+                m_eBack[i] = self.f_m(m_eBack[i - 1], v_eBack[i - 1], h_eBack[i - 1])
+                h_eBack[i] = self.f_h(h_eBack[i - 1], v_eBack[i - 1])
+
+            V = v_eBack
+            m = m_eBack
+            h = h_eBack
+            n = n_eBack
+            ina = self.I_Na(V, m, h)
+            ik = self.I_K(V, n)
+            il = self.I_L(V)
+
+        elif self.metodo == "eulerMod":
+            v_eMod = np.zeros(len(self.t))
+            n_eMod = np.zeros(len(self.t))
+            m_eMod = np.zeros(len(self.t))
+            h_eMod = np.zeros(len(self.t))
+            v_eMod[0] = -65
+            n_eMod[0] = 0.05
+            m_eMod[0] = 0.5
+            h_eMod[0] = 0.4
+            for i in range(1, len(self.t)):
+                solMod = opt.fsolve(self.FEulerBackRoot,
+                     np.array([v_eMod[i - 1],
+                               n_eMod[i - 1],
+                               m_eMod[i - 1],
+                               h_eMod[i - 1]]),
+                (
+                    v_eMod[i - 1],
+                    n_eMod[i - 1],
+                    m_eMod[i - 1],
+                    h_eMod[i - 1], self.t[i]), xtol=10 ** -15)
+            
+                v_eMod[i] = solMod[0]
+                n_eMod[i] = solMod[1]
+                m_eMod[i] = solMod[2]
+                h_eMod[i] = solMod[3]
+            V = v_eMod
+            m = m_eMod
+            h = h_eMod
+            n = n_eMod
+
+            ina = self.I_Na(V, m, h)
+            ik = self.I_K(V, n)
+            il = self.I_L(V)
+
+
+
+
+
+
         else:
             print("Metodo no valido")
             return
@@ -259,5 +441,5 @@ class HodgkinHuxley():
         plt.show()
 
 if __name__ == '__main__':
-    runner = HodgkinHuxley(1, 120, 36, 0.3, 50, -77, -54.387, 0, 500, 0.01, "rungeKutta2")
+    runner = HodgkinHuxley(1, 120, 36, 0.3, 50, -77, -54.387, 0, 500, 0.01, "eulerMod")
     runner.Main()
